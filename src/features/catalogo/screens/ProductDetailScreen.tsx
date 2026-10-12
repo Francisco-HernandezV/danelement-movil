@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   precio: {
     fontFamily: fonts.headingExtra,
     fontSize: 26,
-    color: colors.red,
+    color: colors.text.price,
     marginTop: spacing.xs,
   },
   section: { gap: spacing.sm, marginTop: spacing.sm },

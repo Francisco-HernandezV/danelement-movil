@@ -12,7 +12,7 @@ interface ProductCardProps {
   producto: Producto;
 }
 
-/** Tarjeta de producto: foto, nombre y precio (en rojo). Navega al detalle. */
+/** Tarjeta de producto: foto, nombre y precio (azul suave). Navega al detalle. */
 export function ProductCard({ producto }: ProductCardProps) {
   const uri = cldUrl(producto.imagen, 'w_600,h_600,c_fill');
 
@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
   precio: {
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
-    color: colors.red,
+    color: colors.text.price,
   },
 });
