@@ -47,6 +47,3 @@ example
 
 # Claves de firma de Android
 *.keystore
-
-# Configuración local de herramientas
-.claude/
