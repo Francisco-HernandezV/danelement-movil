@@ -7,23 +7,26 @@ import { AppText } from '@/components/ui';
 import type { ClienteBusqueda } from '@/data/models/cliente';
 import { colors, fonts, spacing } from '@/theme';
 import { BuscarClienteView } from '@/features/clientes/components/BuscarClienteView';
+import { useVentaEnCurso } from '@/features/ventas/context/VentaEnCursoContext';
 
 /**
- * Pantalla independiente de búsqueda de clientes. En Bloque C se cablea al
- * estado de la venta en curso; por ahora solo vuelve atrás al seleccionar.
+ * Pantalla de búsqueda de clientes del POS. Al seleccionar un cliente lo
+ * asocia a la venta en curso; "venta de mostrador" lo marca como sin cliente.
  */
 export function BuscarClienteScreen() {
   const insets = useSafeAreaInsets();
+  const { seleccionarCliente, continuarSinCliente } = useVentaEnCurso();
 
-  const handleSelect = (_cliente: ClienteBusqueda) => {
-    // TODO (Bloque C): asociar el cliente a la venta en curso.
+  const handleSelect = (cliente: ClienteBusqueda) => {
+    seleccionarCliente(cliente);
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace('/ventas');
   };
 
   const handleSinCliente = () => {
+    continuarSinCliente();
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace('/ventas');
   };
 
   return (

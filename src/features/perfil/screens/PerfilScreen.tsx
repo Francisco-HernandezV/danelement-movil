@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Banner, Button, Card, Heading } from '@/components/ui';
 import type { UserRole } from '@/data/models/user';
-import { roleLabel } from '@/data/models/user';
+import { ROLES, roleLabel } from '@/data/models/user';
 import { colors, radius, spacing } from '@/theme';
 import { usePerfilViewModel } from '@/features/perfil/viewmodels/usePerfilViewModel';
 
@@ -45,6 +45,26 @@ export function PerfilScreen() {
           <InfoRow icon="mail-outline" label="Correo" value={vm.email} />
           <InfoRow icon="call-outline" label="Teléfono" value={telefono} />
         </Card>
+
+        {vm.rol === ROLES.vendedor || vm.rol === ROLES.admin ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir punto de venta"
+            onPress={() => router.push('/ventas')}
+            style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+          >
+            <Ionicons name="cart" size={22} color={colors.accent} />
+            <View style={styles.posTexts}>
+              <AppText variant="bodyMedium" style={styles.posTitle}>
+                Punto de venta
+              </AppText>
+              <AppText variant="caption" style={styles.posSub}>
+                Buscar productos y clientes para vender
+              </AppText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+          </Pressable>
+        ) : null}
 
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
       </ScrollView>
@@ -106,4 +126,19 @@ const styles = StyleSheet.create({
   card: { gap: spacing.lg, marginBottom: spacing.xl },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   rowText: { flex: 1, gap: 2 },
+  posBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  posBtnPressed: { opacity: 0.7 },
+  posTexts: { flex: 1, gap: 2 },
+  posTitle: { color: colors.accent },
+  posSub: { color: colors.text.main },
 });

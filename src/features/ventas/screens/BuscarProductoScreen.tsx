@@ -7,20 +7,21 @@ import { AppText } from '@/components/ui';
 import type { VarianteBusqueda } from '@/data/models/venta';
 import { colors, fonts, spacing } from '@/theme';
 import { BuscarProductoView } from '@/features/ventas/components/BuscarProductoView';
+import { useVentaEnCurso } from '@/features/ventas/context/VentaEnCursoContext';
 
 /**
- * Pantalla independiente de búsqueda de productos (atajo del vendedor).
- * De momento, al seleccionar una variante, volvemos atrás; el Bloque C
- * conectará la selección al estado de la venta en curso.
+ * Pantalla de búsqueda de productos (atajo del vendedor).
+ * Al tocar una variante disponible, la agrega al carrito de la venta en curso
+ * (contexto compartido en `app/(vendedor)/_layout.tsx`) y vuelve al POS.
  */
 export function BuscarProductoScreen() {
   const insets = useSafeAreaInsets();
+  const { agregarVariante } = useVentaEnCurso();
 
-  const handleSelect = (_variante: VarianteBusqueda) => {
-    // TODO (Bloque C): agregar la variante seleccionada a la venta en curso
-    // y volver a la pantalla del punto de venta.
+  const handleSelect = (variante: VarianteBusqueda) => {
+    agregarVariante(variante);
     if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else router.replace('/ventas');
   };
 
   return (
