@@ -19,10 +19,13 @@ export const colors = {
     footer: '#0a0c10',
   },
   text: {
-    main: '#ffffff',
+    /** Texto principal: blanco suavizado para no "pegar" sobre el fondo oscuro. */
+    main: '#ededed',
     muted: '#8b949e',
     /** Texto sobre superficies claras / acentos */
     inverse: '#0f1115',
+    /** Color único para precios — azul claro, familia del accent sin competir con enlaces/botones. */
+    price: '#60a5fa',
   },
   /** Azul de marca */
   accent: '#3b82f6',
