@@ -47,3 +47,6 @@ example
 
 # Claves de firma de Android
 *.keystore
+
+.vscode/
+.claude/
