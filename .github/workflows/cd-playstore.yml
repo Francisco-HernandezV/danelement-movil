@@ -1,0 +1,37 @@
+name: CD - Generación de Versión Play Store
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  construir_apk_aab:
+    name: Compilar AAB para Producción
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar Dependencias
+        run: npm ci
+
+      - name: Configurar EAS (Expo Application Services)
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }} 
+
+      - name: Compilar archivo para Android (.aab/.apk)
+        run: eas build --platform android --profile production --non-interactive
