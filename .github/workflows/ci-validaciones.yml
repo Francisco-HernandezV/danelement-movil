@@ -1,6 +1,11 @@
 name: CI - Validaciones Automáticas
 
 on:
+  push:
+    branches:
+      - develop
+      - main
+      - 'release/**'
   pull_request:
     branches:
       - develop
