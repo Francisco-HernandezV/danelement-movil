@@ -17,8 +17,8 @@ import { useVentaEnCurso } from '@/features/ventas/context/VentaEnCursoContext';
  * El estado vive en el contexto `VentaEnCursoContext` (montado en el layout
  * del grupo `(vendedor)`), no en variables sueltas aquí.
  *
- * El cobro / registro final (`POST /api/ventas/procesar`) queda marcado como
- * pendiente — ver TODO al final.
+ * "Cobrar" abre la pantalla de cobro (`/cobro`), que registra la venta con
+ * `POST /api/ventas/procesar`.
  */
 export function VentaScreen() {
   const insets = useSafeAreaInsets();
@@ -26,6 +26,7 @@ export function VentaScreen() {
 
   const irBuscarProducto = () => router.push('/buscar-producto');
   const irBuscarCliente = () => router.push('/buscar-cliente');
+  const irCobrar = () => router.push('/cobro');
 
   const confirmarNueva = () => {
     if (venta.isEmpty && !venta.cliente && !venta.sinCliente) {
@@ -39,14 +40,6 @@ export function VentaScreen() {
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Nueva venta', style: 'destructive', onPress: () => venta.nuevaVenta() },
       ],
-    );
-  };
-
-  const cobrar = () => {
-    // TODO: integrar POST /api/ventas/procesar (fuera del alcance del Bloque C).
-    Alert.alert(
-      'Cobro — pendiente',
-      'El registro final de la venta se implementará en una iteración posterior.',
     );
   };
 
@@ -147,8 +140,8 @@ export function VentaScreen() {
           </AppText>
         </View>
         <Button
-          title="Cobrar (pendiente)"
-          onPress={cobrar}
+          title="Cobrar"
+          onPress={irCobrar}
           disabled={venta.isEmpty}
           variant="primary"
         />

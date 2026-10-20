@@ -1,6 +1,10 @@
 import { http } from '@/config/http';
 import type { ClienteBusqueda } from '@/data/models/cliente';
-import type { VarianteBusqueda } from '@/data/models/venta';
+import type {
+  ProcesarVentaRequest,
+  ProcesarVentaResponse,
+  VarianteBusqueda,
+} from '@/data/models/venta';
 
 /**
  * Repo de los endpoints POS (`/api/ventas/*`).
@@ -21,5 +25,15 @@ export const ventasRepository = {
   buscarCliente(q: string, signal?: AbortSignal): Promise<ClienteBusqueda[]> {
     const query = encodeURIComponent(q);
     return http.get<ClienteBusqueda[]>(`/ventas/buscar-cliente?q=${query}`, { signal });
+  },
+
+  /**
+   * Registra (cobra) la venta: descuenta stock y guarda TODOS los pagos
+   * (`payload.pagos`, uno o varios combinados) en una sola transacción del
+   * backend. Requiere caja abierta. Sin `signal` a propósito:
+   * una venta enviada no debe cancelarse desde el cliente a medio camino.
+   */
+  procesarVenta(payload: ProcesarVentaRequest): Promise<ProcesarVentaResponse> {
+    return http.post<ProcesarVentaResponse>('/ventas/procesar', payload);
   },
 };
