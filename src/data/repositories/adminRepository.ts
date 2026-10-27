@@ -1,9 +1,11 @@
 import { http } from '@/config/http';
 import type {
   ApartadoVencido,
+  CategoriaAdmin,
   EstadoCaja,
   ReporteVentas,
   VarianteInventario,
+  VentaHistorial,
 } from '@/data/models/admin';
 
 /**
@@ -15,9 +17,21 @@ export const adminRepository = {
   reporteVentas(
     rango: { inicio: string; fin: string },
     signal?: AbortSignal,
+    categoriaId?: number | null,
   ): Promise<ReporteVentas> {
-    const qs = `fecha_inicio=${encodeURIComponent(rango.inicio)}&fecha_fin=${encodeURIComponent(rango.fin)}`;
+    let qs = `fecha_inicio=${encodeURIComponent(rango.inicio)}&fecha_fin=${encodeURIComponent(rango.fin)}`;
+    if (categoriaId != null) qs += `&categoria_id=${encodeURIComponent(String(categoriaId))}`;
     return http.get<ReporteVentas>(`/admin/reportes/ventas?${qs}`, { signal });
+  },
+
+  /** Categorías del catálogo (para filtrar el reporte). */
+  categorias(signal?: AbortSignal): Promise<CategoriaAdmin[]> {
+    return http.get<CategoriaAdmin[]>('/admin/categorias', { signal, auth: false });
+  },
+
+  /** Últimas 50 ventas (para el admin no tiene filtro de fecha). */
+  historialVentas(signal?: AbortSignal): Promise<VentaHistorial[]> {
+    return http.get<VentaHistorial[]>('/ventas/historial', { signal });
   },
 
   /** Todas las variantes con su stock. */

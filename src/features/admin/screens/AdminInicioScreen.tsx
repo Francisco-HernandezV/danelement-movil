@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, StateView } from '@/components/ui';
 import { formatFechaHora } from '@/data/models/apartado';
-import { UMBRAL_STOCK_BAJO } from '@/data/models/admin';
+import { textoPrendas, textoTickets, UMBRAL_STOCK_BAJO } from '@/data/models/admin';
 import { formatPrecio, precioNumero } from '@/data/models/producto';
 import { colors, fonts, fontSize, radius, spacing } from '@/theme';
 import { AccesoDirecto } from '@/features/admin/components/AccesoDirecto';
@@ -63,14 +63,19 @@ export function AdminInicioScreen() {
             />
           }
         >
-          {/* Ventas */}
-          <View style={styles.hero}>
+          {/* Ventas (toca para abrir el reporte completo) */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir reporte de ventas"
+            onPress={vm.irAReportes}
+            style={({ pressed }) => [styles.hero, pressed ? styles.pressed : null]}
+          >
             <AppText variant="label">Ventas · últimos 30 días</AppText>
             {vm.mes ? (
               <>
                 <AppText style={styles.heroMonto}>{formatPrecio(vm.mes.ingresos)}</AppText>
                 <AppText variant="caption">
-                  {vm.mes.tickets} tickets · {vm.mes.prendas} prendas · promedio{' '}
+                  {textoTickets(vm.mes.tickets)} · {textoPrendas(vm.mes.prendas)} · promedio{' '}
                   {formatPrecio(vm.mes.ticketPromedio)}
                 </AppText>
               </>
@@ -79,13 +84,13 @@ export function AdminInicioScreen() {
                 {vm.errorMes ?? 'Sin datos.'}
               </AppText>
             )}
-          </View>
+          </Pressable>
 
           <View style={styles.row}>
             <KpiTile
               etiqueta="Vendido hoy"
               valor={vm.hoy ? formatPrecio(vm.hoy.ingresos) : '—'}
-              detalle={vm.hoy ? `${vm.hoy.prendas} prendas` : (vm.errorHoy ?? undefined)}
+              detalle={vm.hoy ? textoPrendas(vm.hoy.prendas) : (vm.errorHoy ?? undefined)}
               icono="trending-up"
             />
             <KpiTile
@@ -196,7 +201,7 @@ export function AdminInicioScreen() {
           <View style={styles.grid}>
             <AccesoDirecto icono="cart" titulo="Punto de venta" onPress={vm.irAVentas} />
             <AccesoDirecto icono="bookmark" titulo="Apartados" onPress={vm.irAApartados} />
-            <AccesoDirecto icono="bar-chart" titulo="Reporte de ventas" proximamente />
+            <AccesoDirecto icono="bar-chart" titulo="Reporte de ventas" onPress={vm.irAReportes} />
             <AccesoDirecto icono="cube" titulo="Inventario y entradas" proximamente />
           </View>
         </ScrollView>

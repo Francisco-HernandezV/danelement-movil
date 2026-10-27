@@ -156,6 +156,7 @@ export function useAdminInicioViewModel() {
     // Accesos
     irAVentas: () => router.push('/ventas'),
     irAApartados: () => router.push('/apartados'),
+    irAReportes: () => router.push('/admin/reportes'),
     volver: () => (router.canGoBack() ? router.back() : router.replace('/perfil')),
   };
 }

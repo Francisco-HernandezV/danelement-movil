@@ -57,6 +57,7 @@ export function ApartadosScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.chipsBar}
           contentContainerStyle={styles.chips}
         >
           {FILTROS_APARTADO.map((f) => {
@@ -155,7 +156,9 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.heading, flex: 1 },
   controls: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.sm },
   search: { marginBottom: 0 },
-  chips: { gap: spacing.sm },
+  // Un ScrollView trae `flexShrink: 1`: sin esto la fila puede aplastarse.
+  chipsBar: { flexGrow: 0, flexShrink: 0 },
+  chips: { gap: spacing.sm, paddingVertical: 2, alignItems: 'center' },
   chip: { ...chipBase, borderColor: colors.border, backgroundColor: colors.bg.card },
   chipActive: { ...chipBase, borderColor: colors.accent, backgroundColor: colors.accentSoft },
   chipText: { color: colors.text.muted },
