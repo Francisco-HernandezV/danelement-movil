@@ -157,6 +157,7 @@ export function useAdminInicioViewModel() {
     irAVentas: () => router.push('/ventas'),
     irAApartados: () => router.push('/apartados'),
     irAReportes: () => router.push('/admin/reportes'),
+    irAInventario: () => router.push('/admin/inventario'),
     volver: () => (router.canGoBack() ? router.back() : router.replace('/perfil')),
   };
 }
