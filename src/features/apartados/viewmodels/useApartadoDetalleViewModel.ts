@@ -9,6 +9,7 @@ import {
   centavosAPesos,
   pesosACentavos,
 } from '@/features/ventas/viewmodels/cobroCalculo';
+import { useComprobante } from '@/features/ventas/viewmodels/useComprobante';
 import { usePagosCombinados } from '@/features/ventas/viewmodels/usePagosCombinados';
 import { resumirAbono } from './apartadoCalculo';
 
@@ -46,6 +47,17 @@ export function useApartadoDetalleViewModel(id: number) {
   const [cancelando, setCancelando] = useState(false);
 
   const escribiendo = useRef(false);
+  const comprobante = useComprobante();
+
+  /** Comprobante PDF del apartado (artículos, abonos y saldo al momento). */
+  const compartirComprobante = useCallback(() => {
+    if (!Number.isFinite(id)) return;
+    void comprobante.compartir({
+      obtener: () => apartadosRepository.comprobantePdf(id),
+      nombreArchivo: `Apartado_DanElement_${id}.pdf`,
+      titulo: `Comprobante del apartado #${id}`,
+    });
+  }, [id, comprobante]);
 
   useEffect(() => {
     if (!Number.isFinite(id)) return;
@@ -230,6 +242,11 @@ export function useApartadoDetalleViewModel(id: number) {
     enviandoAbono,
     errorAbono,
     registrarAbono,
+
+    // Comprobante
+    compartirComprobante,
+    generandoComprobante: comprobante.generando,
+    errorComprobante: comprobante.error,
 
     // Cancelación
     confirmarCancelacion,

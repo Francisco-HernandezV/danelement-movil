@@ -184,6 +184,15 @@ export function ApartadoDetalleScreen({ id }: { id: number }) {
           </View>
         </View>
 
+        {vm.errorComprobante ? <Banner variant="error">{vm.errorComprobante}</Banner> : null}
+        <Button
+          title="Compartir comprobante"
+          variant="secondary"
+          onPress={vm.compartirComprobante}
+          loading={vm.generandoComprobante}
+          leftAccessory={<Ionicons name="share-outline" size={18} color={colors.text.main} />}
+        />
+
         <View style={styles.card}>
           <ResumenFila etiqueta="Creado" valor={formatFechaHora(cab.creado_en)} />
           {cab.vendedor_nombre ? (

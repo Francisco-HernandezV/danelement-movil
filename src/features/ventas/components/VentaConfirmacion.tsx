@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button } from '@/components/ui';
+import { AppText, Banner, Button } from '@/components/ui';
 import { nombreCliente } from '@/data/models/cliente';
 import { formatPrecio } from '@/data/models/producto';
 import { colors, fonts, fontSize, radius, spacing } from '@/theme';
@@ -13,13 +13,24 @@ interface VentaConfirmacionProps {
   venta: VentaCobrada;
   onNuevaVenta: () => void;
   onSalir: () => void;
+  /** Descarga el ticket PDF y abre el menú de compartir. */
+  onComprobante: () => void;
+  generandoComprobante: boolean;
+  errorComprobante: string | null;
 }
 
 /**
  * Venta ya registrada (el carrito ya se limpió).
  * Muestra folio, desglose de pagos y, en grande, el cambio a entregar.
  */
-export function VentaConfirmacion({ venta, onNuevaVenta, onSalir }: VentaConfirmacionProps) {
+export function VentaConfirmacion({
+  venta,
+  onNuevaVenta,
+  onSalir,
+  onComprobante,
+  generandoComprobante,
+  errorComprobante,
+}: VentaConfirmacionProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -69,14 +80,13 @@ export function VentaConfirmacion({ venta, onNuevaVenta, onSalir }: VentaConfirm
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        {/* TODO(comprobante): generar/compartir el ticket con
-            `GET /api/ventas/ticket/:id/pdf`. Pendiente por alcance. */}
+        {errorComprobante ? <Banner variant="error">{errorComprobante}</Banner> : null}
         <Button
-          title="Generar comprobante (pendiente)"
+          title="Compartir ticket"
           variant="secondary"
-          disabled
-          onPress={() => {}}
-          leftAccessory={<Ionicons name="receipt-outline" size={18} color={colors.text.main} />}
+          onPress={onComprobante}
+          loading={generandoComprobante}
+          leftAccessory={<Ionicons name="share-outline" size={18} color={colors.text.main} />}
         />
         <Button title="Nueva venta" onPress={onNuevaVenta} />
         <Button title="Salir del punto de venta" variant="ghost" onPress={onSalir} />

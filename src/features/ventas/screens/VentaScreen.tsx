@@ -122,6 +122,9 @@ export function VentaScreen() {
           venta={vm.ventaCobrada}
           onNuevaVenta={vm.nuevaVenta}
           onSalir={vm.salir}
+          onComprobante={vm.compartirComprobante}
+          generandoComprobante={vm.generandoComprobante}
+          errorComprobante={vm.errorComprobante}
         />
       ) : null}
 
