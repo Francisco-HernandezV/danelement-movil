@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { ApiError } from '@/config/http';
 import type { ClienteBusqueda } from '@/data/models/cliente';
+import { formatPrecio } from '@/data/models/producto';
 import type { MetodoPago, ProcesarVentaRequest } from '@/data/models/venta';
 import { ventasRepository } from '@/data/repositories/ventasRepository';
 import { useVentaEnCurso } from '@/features/ventas/context/VentaEnCursoContext';
@@ -9,8 +10,10 @@ import {
   centavosAPesos,
   centavosATexto,
   pagosParaEnviar,
+  pendienteParaPago,
   pesosACentavos,
   resumirCobro,
+  sugerenciasEfectivo,
   type PagoCaptura,
 } from './cobroCalculo';
 
@@ -35,31 +38,44 @@ export interface VentaCobrada {
 /** Campos editables de un pago. */
 export type CambiosPago = Partial<Pick<PagoCaptura, 'metodo' | 'montoTexto' | 'referencia'>>;
 
+/** Atajo de monto para un pago en efectivo ("Exacto", "$500", ...). */
+export interface SugerenciaMonto {
+  etiqueta: string;
+  /** Texto que se escribe en el input al tocarla. */
+  texto: string;
+}
+
+interface CobroOptions {
+  /** Se llama cuando el backend registró la venta (el carrito ya se limpió). */
+  onCobrada: (venta: VentaCobrada) => void;
+}
+
 /**
- * Lógica de la pantalla de Cobro del POS con PAGOS COMBINADOS.
+ * Lógica del paso de Pago del POS con PAGOS COMBINADOS.
  *
  * Lee la venta en curso del `VentaEnCursoContext` y mantiene una lista de
- * pagos (efectivo, tarjetas, transferencia; se pueden repetir) que el vendedor
- * agrega, edita y quita. Las reglas de dinero viven en `cobroCalculo.ts`.
+ * pagos (efectivo, tarjetas, transferencia; se pueden repetir). Arranca con
+ * un pago en efectivo por el total (el caso más común: solo confirmar).
+ * Solo un pago está "activo" (editándose) a la vez; los demás se muestran
+ * resumidos. Cada pago nuevo propone como monto lo que falta por cubrir.
+ * Las reglas de dinero viven en `cobroCalculo.ts`.
  * Al confirmar llama a `POST /api/ventas/procesar`:
- * - éxito → guarda el folio y el desglose, limpia el carrito (`nuevaVenta`) y
- *   la pantalla muestra la confirmación;
+ * - éxito → limpia el carrito (`nuevaVenta`) y entrega el desglose a `onCobrada`;
  * - error → conserva carrito y pagos capturados y expone el mensaje del
  *   backend (p. ej. caja cerrada o stock insuficiente).
  */
-export function useCobroViewModel() {
+export function useCobroViewModel({ onCobrada }: CobroOptions) {
   const venta = useVentaEnCurso();
   const totalCentavos = pesosACentavos(venta.subtotal);
 
-  // Arranca con un pago en efectivo por el total (el caso más común).
   const [pagos, setPagos] = useState<PagoCaptura[]>(() => [
     { id: 1, metodo: 'Efectivo', montoTexto: centavosATexto(totalCentavos), referencia: '' },
   ]);
+  const [activoId, setActivoId] = useState<number | null>(1);
   const siguienteId = useRef(2);
 
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [cobrada, setCobrada] = useState<VentaCobrada | null>(null);
 
   // Candado síncrono contra doble toque: el estado `enviando` tarda un render
   // en deshabilitar el botón y dos toques rápidos alcanzarían a pasar.
@@ -67,23 +83,52 @@ export function useCobroViewModel() {
 
   const resumen = useMemo(() => resumirCobro(totalCentavos, pagos), [totalCentavos, pagos]);
 
-  const puedeConfirmar = !venta.isEmpty && resumen.completo && !enviando && cobrada === null;
+  /** Atajos de monto para cada pago en efectivo, según lo que le falta cubrir. */
+  const sugerencias = useMemo(() => {
+    const out: Record<number, SugerenciaMonto[]> = {};
+    for (const p of pagos) {
+      if (p.metodo !== 'Efectivo') continue;
+      const pendiente = pendienteParaPago(totalCentavos, pagos, p.id);
+      if (pendiente <= 0) continue;
+      out[p.id] = [
+        { etiqueta: 'Exacto', texto: centavosATexto(pendiente) },
+        ...sugerenciasEfectivo(pendiente).map((c) => ({
+          etiqueta: formatPrecio(centavosAPesos(c)),
+          texto: centavosATexto(c),
+        })),
+      ];
+    }
+    return out;
+  }, [totalCentavos, pagos]);
 
-  /** Agrega un pago proponiendo como monto lo que falta por cubrir. */
-  const agregarPago = useCallback(() => {
-    const id = siguienteId.current++;
-    setPagos((prev) => [
-      ...prev,
-      {
-        id,
-        // El primero suele ser efectivo; los siguientes, tarjeta.
-        metodo: prev.length === 0 ? 'Efectivo' : 'T. Débito',
-        montoTexto: centavosATexto(resumirCobro(totalCentavos, prev).restanteCentavos),
-        referencia: '',
-      },
-    ]);
-    setError(null);
-  }, [totalCentavos]);
+  const puedeConfirmar = !venta.isEmpty && resumen.completo && !enviando;
+
+  /**
+   * Agrega otra forma de pago por lo que falta cubrir y la deja activa. Sin
+   * método explícito propone tarjeta si ya hay efectivo (el combo más común).
+   */
+  const agregarPago = useCallback(
+    (metodo?: MetodoPago) => {
+      const id = siguienteId.current++;
+      const elegido: MetodoPago =
+        metodo ?? (pagos.some((p) => p.metodo === 'Efectivo') ? 'T. Débito' : 'Efectivo');
+      setPagos([
+        ...pagos,
+        {
+          id,
+          metodo: elegido,
+          montoTexto: centavosATexto(resumen.restanteCentavos),
+          referencia: '',
+        },
+      ]);
+      setActivoId(id);
+      setError(null);
+    },
+    [pagos, resumen.restanteCentavos],
+  );
+
+  /** Abre un pago resumido para editarlo (y cierra el que estaba activo). */
+  const activarPago = useCallback((id: number) => setActivoId(id), []);
 
   const actualizarPago = useCallback((id: number, cambios: CambiosPago) => {
     setPagos((prev) =>
@@ -98,10 +143,16 @@ export function useCobroViewModel() {
     setError(null);
   }, []);
 
-  const quitarPago = useCallback((id: number) => {
-    setPagos((prev) => prev.filter((p) => p.id !== id));
-    setError(null);
-  }, []);
+  const quitarPago = useCallback(
+    (id: number) => {
+      const restantes = pagos.filter((p) => p.id !== id);
+      setPagos(restantes);
+      // Si se quitó el activo, queda activo el último (o ninguno).
+      if (activoId === id) setActivoId(restantes.at(-1)?.id ?? null);
+      setError(null);
+    },
+    [pagos, activoId],
+  );
 
   const confirmar = useCallback(async () => {
     if (!puedeConfirmar || enviandoRef.current) return;
@@ -118,7 +169,7 @@ export function useCobroViewModel() {
 
     try {
       const res = await ventasRepository.procesarVenta(payload);
-      setCobrada({
+      const cobrada: VentaCobrada = {
         ventaId: res.venta_id,
         total: centavosAPesos(totalCentavos),
         pagos: pagos.map((p) => ({
@@ -129,8 +180,9 @@ export function useCobroViewModel() {
         cambio: centavosAPesos(resumen.cambioCentavos),
         cliente: venta.cliente,
         totalItems: venta.totalItems,
-      });
+      };
       venta.nuevaVenta();
+      onCobrada(cobrada);
     } catch (e) {
       // Los pagos capturados se conservan para reintentar.
       setError(e instanceof ApiError ? e.message : 'No se pudo registrar la venta. Inténtalo de nuevo.');
@@ -138,21 +190,21 @@ export function useCobroViewModel() {
       enviandoRef.current = false;
       setEnviando(false);
     }
-  }, [puedeConfirmar, venta, pagos, resumen, totalCentavos]);
+  }, [puedeConfirmar, venta, pagos, resumen, totalCentavos, onCobrada]);
 
   return {
-    // Resumen de la venta en curso
-    cliente: venta.cliente,
-    sinCliente: venta.sinCliente,
-    items: venta.items,
-    totalItems: venta.totalItems,
-    carritoVacio: venta.isEmpty,
-
     // Pagos
     pagos,
+    activoId,
+    activarPago,
     agregarPago,
     actualizarPago,
     quitarPago,
+    sugerencias,
+    /** Monto válido de cada pago en pesos (`null` si no es un monto > 0). */
+    montos: Object.fromEntries(
+      Object.entries(resumen.montos).map(([id, c]) => [id, c === null ? null : centavosAPesos(c)]),
+    ) as Record<number, number | null>,
     erroresPago: resumen.erroresPago,
     errorPagos: resumen.error,
 
@@ -166,7 +218,6 @@ export function useCobroViewModel() {
     puedeConfirmar,
     enviando,
     error,
-    cobrada,
     confirmar,
   };
 }

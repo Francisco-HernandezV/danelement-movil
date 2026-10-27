@@ -146,3 +146,35 @@ export function pagosParaEnviar(pagos: PagoCaptura[], resumen: ResumenCobro): Pa
       return pago;
     });
 }
+
+/**
+ * Lo que le falta cubrir a un pago concreto: el total menos los demás pagos
+ * válidos. Sirve para el botón "Exacto" y los billetes sugeridos.
+ */
+export function pendienteParaPago(totalCentavos: number, pagos: PagoCaptura[], id: number): number {
+  let otros = 0;
+  for (const p of pagos) {
+    if (p.id === id) continue;
+    const c = parseCentavos(p.montoTexto);
+    if (c !== null && c > 0) otros += c;
+  }
+  return Math.max(0, totalCentavos - otros);
+}
+
+/** Denominaciones (en pesos) para redondear hacia arriba el efectivo recibido. */
+const BILLETES = [50, 100, 200, 500, 1000];
+
+/**
+ * Billetes sugeridos para un pago en efectivo: los siguientes montos
+ * "redondos" por encima de lo pendiente (máximo 3). No incluye el exacto.
+ */
+export function sugerenciasEfectivo(pendienteCentavos: number): number[] {
+  if (pendienteCentavos <= 0) return [];
+  const set = new Set<number>();
+  for (const b of BILLETES) {
+    const paso = b * 100;
+    const redondo = Math.ceil(pendienteCentavos / paso) * paso;
+    if (redondo > pendienteCentavos) set.add(redondo);
+  }
+  return [...set].sort((a, b) => a - b).slice(0, 3);
+}
