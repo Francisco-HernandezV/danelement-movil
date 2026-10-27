@@ -117,29 +117,41 @@ export function resumirCobro(totalCentavos: number, pagos: PagoCaptura[]): Resum
   };
 }
 
+/** Un pago con el monto que realmente se aplica (ya descontado el cambio). */
+export interface PagoAplicado {
+  pago: PagoCaptura;
+  centavos: number;
+}
+
 /**
- * Pagos listos para `POST /api/ventas/procesar`.
- *
- * El cambio se descuenta de los pagos en efectivo (empezando por el último)
- * para que la suma enviada sea exactamente el total y el corte de caja no
- * cuente el efectivo que se regresó al cliente. Un pago que queda en cero se
- * omite (el backend también lo ignoraría).
+ * Descuenta el cambio de los pagos en efectivo (empezando por el último) para
+ * que la suma aplicada sea exactamente lo cobrado y el corte de caja no cuente
+ * el efectivo que se regresó al cliente. Conserva el orden y los pagos que
+ * quedan en cero (quien llama decide si los omite).
  */
-export function pagosParaEnviar(pagos: PagoCaptura[], resumen: ResumenCobro): PagoVenta[] {
+export function aplicarCambio(pagos: PagoCaptura[], resumen: ResumenCobro): PagoAplicado[] {
   let porDescontar = resumen.cambioCentavos;
-  const aplicados = pagos.map((p) => ({ p, centavos: resumen.montos[p.id] ?? 0 }));
+  const aplicados = pagos.map((p) => ({ pago: p, centavos: resumen.montos[p.id] ?? 0 }));
 
   for (let i = aplicados.length - 1; i >= 0 && porDescontar > 0; i--) {
     const a = aplicados[i];
-    if (!esEfectivo(a.p.metodo)) continue;
+    if (!esEfectivo(a.pago.metodo)) continue;
     const resta = Math.min(a.centavos, porDescontar);
     a.centavos -= resta;
     porDescontar -= resta;
   }
+  return aplicados;
+}
 
-  return aplicados
+/**
+ * Pagos listos para `POST /api/ventas/procesar`: cambio descontado del
+ * efectivo (ver `aplicarCambio`). Un pago que queda en cero se omite (el
+ * backend también lo ignoraría).
+ */
+export function pagosParaEnviar(pagos: PagoCaptura[], resumen: ResumenCobro): PagoVenta[] {
+  return aplicarCambio(pagos, resumen)
     .filter((a) => a.centavos > 0)
-    .map(({ p, centavos }) => {
+    .map(({ pago: p, centavos }) => {
       const pago: PagoVenta = { metodo: p.metodo, monto: centavosAPesos(centavos) };
       const ref = p.referencia.trim();
       if (!esEfectivo(p.metodo) && ref.length > 0) pago.referencia = ref;

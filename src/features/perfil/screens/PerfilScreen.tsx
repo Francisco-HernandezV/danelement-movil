@@ -47,23 +47,42 @@ export function PerfilScreen() {
         </Card>
 
         {vm.rol === ROLES.vendedor || vm.rol === ROLES.admin ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir punto de venta"
-            onPress={() => router.push('/ventas')}
-            style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
-          >
-            <Ionicons name="cart" size={22} color={colors.accent} />
-            <View style={styles.posTexts}>
-              <AppText variant="bodyMedium" style={styles.posTitle}>
-                Punto de venta
-              </AppText>
-              <AppText variant="caption" style={styles.posSub}>
-                Buscar productos y clientes para vender
-              </AppText>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
-          </Pressable>
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir punto de venta"
+              onPress={() => router.push('/ventas')}
+              style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+            >
+              <Ionicons name="cart" size={22} color={colors.accent} />
+              <View style={styles.posTexts}>
+                <AppText variant="bodyMedium" style={styles.posTitle}>
+                  Punto de venta
+                </AppText>
+                <AppText variant="caption" style={styles.posSub}>
+                  Buscar productos y clientes para vender
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir apartados"
+              onPress={() => router.push('/apartados')}
+              style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+            >
+              <Ionicons name="bookmark" size={22} color={colors.accent} />
+              <View style={styles.posTexts}>
+                <AppText variant="bodyMedium" style={styles.posTitle}>
+                  Apartados
+                </AppText>
+                <AppText variant="caption" style={styles.posSub}>
+                  Nuevos apartados, abonos y liquidaciones
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </Pressable>
+          </>
         ) : null}
 
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />

@@ -5,7 +5,7 @@ import { AppText, Input } from '@/components/ui';
 import { metodoConReferencia, type MetodoPago } from '@/data/models/venta';
 import { colors, fonts, radius, spacing } from '@/theme';
 import type { PagoCaptura } from '@/features/ventas/viewmodels/cobroCalculo';
-import type { CambiosPago, SugerenciaMonto } from '@/features/ventas/viewmodels/useCobroViewModel';
+import type { CambiosPago, SugerenciaMonto } from '@/features/ventas/viewmodels/usePagosCombinados';
 import { MetodoPagoSelector } from './MetodoPagoSelector';
 
 interface PagoEditorProps {
@@ -15,6 +15,8 @@ interface PagoEditorProps {
   sugerencias?: SugerenciaMonto[];
   /** Muestra el botón de quitar (cuando hay más de un pago). */
   puedeQuitar: boolean;
+  /** Pide referencia en tarjeta/transferencia (por defecto `true`). */
+  mostrarReferencia?: boolean;
   deshabilitado: boolean;
   onCambiar: (id: number, cambios: CambiosPago) => void;
   onQuitar: (id: number) => void;
@@ -30,6 +32,7 @@ export function PagoEditor({
   error,
   sugerencias,
   puedeQuitar,
+  mostrarReferencia = true,
   deshabilitado,
   onCambiar,
   onQuitar,
@@ -98,7 +101,7 @@ export function PagoEditor({
         </View>
       ) : null}
 
-      {metodoConReferencia(pago.metodo) ? (
+      {mostrarReferencia && metodoConReferencia(pago.metodo) ? (
         <Input
           value={pago.referencia}
           onChangeText={(t) => onCambiar(pago.id, { referencia: t })}
