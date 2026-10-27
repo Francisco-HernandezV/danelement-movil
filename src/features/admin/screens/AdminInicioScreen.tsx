@@ -202,7 +202,7 @@ export function AdminInicioScreen() {
             <AccesoDirecto icono="cart" titulo="Punto de venta" onPress={vm.irAVentas} />
             <AccesoDirecto icono="bookmark" titulo="Apartados" onPress={vm.irAApartados} />
             <AccesoDirecto icono="bar-chart" titulo="Reporte de ventas" onPress={vm.irAReportes} />
-            <AccesoDirecto icono="cube" titulo="Inventario y entradas" proximamente />
+            <AccesoDirecto icono="cube" titulo="Inventario y entradas" onPress={vm.irAInventario} />
           </View>
         </ScrollView>
       )}
