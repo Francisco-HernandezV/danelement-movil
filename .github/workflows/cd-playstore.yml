@@ -1,37 +1,73 @@
 name: CD - Generación de Versión Play Store
 
+# Solo compila cuando el código YA llegó a release o main (un PR aprobado y
+# fusionado genera un push). No se compila en cada PR: es lento y gasta
+# créditos de EAS.
+#   release -> APK instalable (perfil "preview") para pruebas de caja negra.
+#   main    -> AAB firmado (perfil "production") para Google Play + tag de versión.
 on:
   push:
-    branches:
-      - main
-      - 'release/**'
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+    branches: [release, 'release/**', main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  construir_apk_aab:
-    name: Compilar AAB para Producción
+  pruebas:
+    name: Pruebas antes de compilar
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --ci
 
-      - name: Instalar Dependencias
-        run: npm ci
+  construir:
+    name: Compilar Android con EAS
+    needs: pruebas
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # para crear el tag de versión en main
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
 
-      - name: Configurar EAS (Expo Application Services)
+      - name: Configurar EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }} 
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Compilar archivo para Android (.aab/.apk)
-        run: eas build --platform android --profile production --non-interactive
+      - name: Elegir perfil según la rama
+        id: perfil
+        run: |
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            echo "nombre=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "nombre=preview" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compilar (${{ steps.perfil.outputs.nombre }})
+        run: eas build --platform android --profile ${{ steps.perfil.outputs.nombre }} --non-interactive
+
+      - name: Crear tag de versión (solo main)
+        if: github.ref_name == 'main'
+        run: |
+          VERSION="v$(node -p "require('./app.json').expo.version")"
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null; then
+            echo "El tag $VERSION ya existe; sube la versión en app.json para la próxima liberación."
+          else
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
