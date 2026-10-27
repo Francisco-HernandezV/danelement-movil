@@ -10,8 +10,11 @@ import { BuscarClienteView } from '@/features/clientes/components/BuscarClienteV
 interface ClienteSelectorSheetProps {
   visible: boolean;
   onElegir: (cliente: ClienteBusqueda) => void;
-  onMostrador: () => void;
+  /** "Continuar sin cliente". Omitir cuando el cliente es obligatorio (apartados). */
+  onMostrador?: () => void;
   onCerrar: () => void;
+  /** Título de la hoja (por defecto "Cliente de la venta"). */
+  titulo?: string;
 }
 
 /**
@@ -25,6 +28,7 @@ export function ClienteSelectorSheet({
   onElegir,
   onMostrador,
   onCerrar,
+  titulo = 'Cliente de la venta',
 }: ClienteSelectorSheetProps) {
   const insets = useSafeAreaInsets();
   const esIOS = Platform.OS === 'ios';
@@ -44,7 +48,7 @@ export function ClienteSelectorSheet({
       >
         <View style={styles.header}>
           <AppText variant="subtitle" style={styles.title}>
-            Cliente de la venta
+            {titulo}
           </AppText>
           <Pressable
             accessibilityRole="button"
