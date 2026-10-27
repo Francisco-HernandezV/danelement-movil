@@ -46,6 +46,26 @@ export function PerfilScreen() {
           <InfoRow icon="call-outline" label="Teléfono" value={telefono} />
         </Card>
 
+        {vm.rol === ROLES.admin ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir panel de administración"
+            onPress={() => router.push('/admin')}
+            style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+          >
+            <Ionicons name="speedometer" size={22} color={colors.accent} />
+            <View style={styles.posTexts}>
+              <AppText variant="bodyMedium" style={styles.posTitle}>
+                Panel de administración
+              </AppText>
+              <AppText variant="caption" style={styles.posSub}>
+                Ventas, caja, alertas de inventario y reportes
+              </AppText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+          </Pressable>
+        ) : null}
+
         {vm.rol === ROLES.vendedor || vm.rol === ROLES.admin ? (
           <>
             <Pressable
