@@ -4,8 +4,10 @@ import { useCallback, useState } from 'react';
 
 import type { ClienteBusqueda } from '@/data/models/cliente';
 import type { VarianteBusqueda } from '@/data/models/venta';
+import { ventasRepository } from '@/data/repositories/ventasRepository';
 import { useVentaEnCurso } from '@/features/ventas/context/VentaEnCursoContext';
 import type { VentaCobrada } from './useCobroViewModel';
+import { useComprobante } from './useComprobante';
 
 /**
  * Vistas del Punto de Venta:
@@ -39,6 +41,7 @@ export function usePuntoVentaViewModel() {
   const [ventaCobrada, setVentaCobrada] = useState<VentaCobrada | null>(null);
   const [confirmacion, setConfirmacion] = useState<Confirmacion>(null);
   const [selectorClienteAbierto, setSelectorClienteAbierto] = useState(false);
+  const comprobante = useComprobante();
 
   const hayVentaEnCurso = !venta.isEmpty || venta.cliente !== null;
   // En la confirmación la venta ya se registró: salir no pierde nada.
@@ -90,16 +93,28 @@ export function usePuntoVentaViewModel() {
     setModo('confirmacion');
   }, []);
 
+  /** Ticket PDF de la venta recién cobrada: lo descarga y abre el menú de compartir. */
+  const compartirComprobante = useCallback(() => {
+    if (!ventaCobrada) return;
+    const id = ventaCobrada.ventaId;
+    void comprobante.compartir({
+      obtener: () => ventasRepository.ticketPdf(id),
+      nombreArchivo: `Ticket_DanElement_${id}.pdf`,
+      titulo: `Ticket de venta #${id}`,
+    });
+  }, [ventaCobrada, comprobante]);
+
   /** "Nueva venta": tras cobrar empieza directo; con venta en curso, pregunta. */
   const nuevaVenta = useCallback(() => {
     if (modo === 'confirmacion' || !hayVentaEnCurso) {
       venta.nuevaVenta();
       setVentaCobrada(null);
+      comprobante.limpiarError();
       setModo('venta');
       return;
     }
     setConfirmacion({ tipo: 'nueva' });
-  }, [modo, hayVentaEnCurso, venta]);
+  }, [modo, hayVentaEnCurso, venta, comprobante]);
 
   // ── Salida protegida ──
   usePreventRemove(debeConfirmarSalida, ({ data }) => {
@@ -157,6 +172,11 @@ export function usePuntoVentaViewModel() {
     onCobrada,
     ventaCobrada,
     nuevaVenta,
+
+    // Comprobante
+    compartirComprobante,
+    generandoComprobante: comprobante.generando,
+    errorComprobante: comprobante.error,
 
     // Salida / descarte
     salir,

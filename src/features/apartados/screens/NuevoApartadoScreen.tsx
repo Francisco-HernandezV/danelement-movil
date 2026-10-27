@@ -272,6 +272,14 @@ function Confirmacion({ vm }: { vm: ReturnType<typeof useNuevoApartadoViewModel>
         ) : null}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+        {vm.errorComprobante ? <Banner variant="error">{vm.errorComprobante}</Banner> : null}
+        <Button
+          title="Compartir comprobante"
+          variant="secondary"
+          onPress={vm.compartirComprobante}
+          loading={vm.generandoComprobante}
+          leftAccessory={<Ionicons name="share-outline" size={18} color={colors.text.main} />}
+        />
         <Button title="Ver apartado" onPress={vm.verApartado} />
         <Button title="Nuevo apartado" variant="secondary" onPress={vm.otroApartado} />
       </View>

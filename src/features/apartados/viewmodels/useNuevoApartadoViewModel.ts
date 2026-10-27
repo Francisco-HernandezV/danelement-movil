@@ -14,6 +14,7 @@ import {
   centavosAPesos,
   pesosACentavos,
 } from '@/features/ventas/viewmodels/cobroCalculo';
+import { useComprobante } from '@/features/ventas/viewmodels/useComprobante';
 import { usePagosCombinados } from '@/features/ventas/viewmodels/usePagosCombinados';
 import { resumirAnticipo } from './apartadoCalculo';
 
@@ -66,6 +67,7 @@ export function useNuevoApartadoViewModel() {
   const [creado, setCreado] = useState<ApartadoCreado | null>(null);
   const [salidaPendiente, setSalidaPendiente] = useState<NavigationAction | null>(null);
   const enviandoRef = useRef(false);
+  const comprobante = useComprobante();
 
   const totalCentavos = pesosACentavos(venta.subtotal);
 
@@ -211,12 +213,24 @@ export function useNuevoApartadoViewModel() {
     router.replace({ pathname: '/apartados/[id]', params: { id: String(creado.apartadoId) } });
   }, [creado]);
 
+  /** Comprobante PDF del apartado recién creado. */
+  const compartirComprobante = useCallback(() => {
+    if (!creado) return;
+    const id = creado.apartadoId;
+    void comprobante.compartir({
+      obtener: () => apartadosRepository.comprobantePdf(id),
+      nombreArchivo: `Apartado_DanElement_${id}.pdf`,
+      titulo: `Comprobante del apartado #${id}`,
+    });
+  }, [creado, comprobante]);
+
   const otroApartado = useCallback(() => {
     venta.nuevaVenta();
     pagos.reiniciar(0);
     setCreado(null);
+    comprobante.limpiarError();
     setModo('captura');
-  }, [venta, pagos]);
+  }, [venta, pagos, comprobante]);
 
   // ── Salida protegida ──
   usePreventRemove(hayDatos && creado === null, ({ data }) => setSalidaPendiente(data.action));
@@ -288,6 +302,9 @@ export function useNuevoApartadoViewModel() {
     creado,
     verApartado,
     otroApartado,
+    compartirComprobante,
+    generandoComprobante: comprobante.generando,
+    errorComprobante: comprobante.error,
 
     // Salida
     salir,

@@ -36,4 +36,9 @@ export const ventasRepository = {
   procesarVenta(payload: ProcesarVentaRequest): Promise<ProcesarVentaResponse> {
     return http.post<ProcesarVentaResponse>('/ventas/procesar', payload);
   },
+
+  /** Ticket PDF de la venta (`GET /api/ventas/ticket/:id/pdf`, papel térmico de 80 mm). */
+  ticketPdf(ventaId: number): Promise<Uint8Array> {
+    return http.getBytes(`/ventas/ticket/${ventaId}/pdf`);
+  },
 };

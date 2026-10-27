@@ -46,4 +46,9 @@ export const apartadosRepository = {
   cancelar(id: number): Promise<{ message: string }> {
     return http.post<{ message: string }>(`/ventas/apartados/${id}/cancelar`);
   },
+
+  /** Comprobante PDF del apartado (`GET /api/ventas/apartados/:id/pdf`), con abonos y saldo. */
+  comprobantePdf(id: number): Promise<Uint8Array> {
+    return http.getBytes(`/ventas/apartados/${id}/pdf`);
+  },
 };
