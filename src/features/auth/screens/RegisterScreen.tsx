@@ -83,14 +83,7 @@ export function RegisterScreen() {
                 vm.clearFieldError('password');
               }}
             />
-            {/* Aviso de privacidad simplificado + aceptación obligatoria */}
-            <AppText variant="caption" style={styles.aviso}>
-              El Lic. José Daniel Hernández Pérez (DanElement Boutique) usará tu nombre, correo, fecha de
-              nacimiento y, si lo das, tu teléfono para crear y administrar tu cuenta, registrar tus compras y
-              apartados, comunicarse contigo y proteger tu cuenta. No tratamos datos sensibles ni te enviaremos
-              publicidad.
-            </AppText>
-
+            {/* Aceptación obligatoria de Términos y Aviso de privacidad */}
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: vm.aceptaTerminos }}
@@ -107,14 +100,14 @@ export function RegisterScreen() {
                 color={vm.fieldErrors.acepta_terminos ? colors.red : colors.accent}
               />
               <AppText variant="caption" style={styles.checkText}>
-                Soy mayor de 18 años, acepto los{' '}
+                Acepto los{' '}
                 <AppText
                   variant="link"
                   onPress={() => router.push('/legal/terminos')}
                 >
                   Términos y condiciones
                 </AppText>{' '}
-                y he leído el{' '}
+                y el{' '}
                 <AppText
                   variant="link"
                   onPress={() => router.push('/legal/privacidad')}
@@ -147,7 +140,6 @@ export function RegisterScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: spacing.xs },
-  aviso: { marginTop: spacing.sm, lineHeight: 18 },
   checkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
