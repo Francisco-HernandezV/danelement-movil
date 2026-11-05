@@ -1,33 +1,86 @@
 name: CI - Validaciones Automáticas
 
+# Se ejecuta en cada Push o Pull Request hacia las ramas protegidas.
+# Un PR de feature/* -> develop solo se puede fusionar si TODOS estos jobs
+# terminan en verde (además de la aprobación de un compañero; ver README).
 on:
   push:
-    branches:
-      - develop
-      - main
-      - 'release/**'
+    branches: [develop, release, 'release/**', main]
   pull_request:
-    branches:
-      - develop
-      - main
-      - 'release/**'
+    branches: [develop, release, 'release/**', main]
+
+# Si se sube otro commit al mismo PR, se cancela la corrida anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  verificacion_codigo:
-    name: Revisión de Linter y Pruebas
+  calidad:
+    name: Lint y Typecheck
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
-
-      - name: Instalar Dependencias
-        run: npm ci
-
-      - name: Ejecutar Linter
+      - run: npm ci
+      - name: Linter
         run: npm run lint
+      - name: Typecheck (TypeScript)
+        run: npm run typecheck
+
+  pruebas:
+    name: Pruebas unitarias e integración
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Pruebas unitarias (caja blanca)
+        run: npm run test:unit -- --ci
+      - name: Pruebas de integración
+        run: npm run test:integration -- --ci
+      - name: Reporte de cobertura
+        if: always()
+        run: npm run test:ci
+      - name: Guardar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura
+          path: coverage/
+          retention-days: 14
+
+  seguridad:
+    name: Análisis SAST (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      # Falla el pipeline solo con hallazgos de severidad alta (ERROR),
+      # que es lo que pide la rúbrica: "libre de fallos críticos".
+      - name: Escaneo estático de seguridad
+        run: >
+          semgrep scan
+          --config p/javascript
+          --config p/typescript
+          --config p/react
+          --config p/secrets
+          --severity ERROR
+          --error
+          --sarif --output semgrep.sarif
+      - name: Guardar reporte de Semgrep
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep
+          path: semgrep.sarif
+          retention-days: 14
