@@ -124,6 +124,18 @@ export function PerfilScreen() {
         </View>
 
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
+
+        {vm.rol === ROLES.cliente ? (
+          <AppText
+            variant="link"
+            accessibilityRole="button"
+            color={colors.red}
+            style={styles.eliminar}
+            onPress={() => router.push('/eliminar-cuenta')}
+          >
+            Eliminar mi cuenta
+          </AppText>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -173,6 +185,7 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   header: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  eliminar: { textAlign: 'center', marginTop: spacing.sm },
   legal: {
     flexDirection: 'row',
     flexWrap: 'wrap',
