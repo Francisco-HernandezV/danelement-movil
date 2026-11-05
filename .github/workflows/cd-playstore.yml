@@ -90,8 +90,12 @@ jobs:
             const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
             app.expo.version = process.env.NUMERO;
             fs.writeFileSync("app.json", JSON.stringify(app, null, 2) + "\n");'
-          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
-            commit -q -am "chore: versión $NUMERO (solo para la compilación)"
+          if git diff --quiet; then
+            echo "app.json ya tiene la versión $NUMERO; no hace falta el commit temporal."
+          else
+            git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
+              commit -q -am "chore: versión $NUMERO (solo para la compilación)"
+          fi
 
       - name: Compilar (${{ needs.version.outputs.perfil }})
         run: >
