@@ -26,6 +26,6 @@ export interface LegalDoc {
   secciones: LegalSection[];
 }
 
-export const FECHA_VIGENCIA = '4 de noviembre de 2026';
-export const TERMINOS_VERSION = '1.1';
-export const AVISO_VERSION = '1.0';
+export const FECHA_VIGENCIA = '5 de noviembre de 2026';
+export const TERMINOS_VERSION = '1.2';
+export const AVISO_VERSION = '1.1';
