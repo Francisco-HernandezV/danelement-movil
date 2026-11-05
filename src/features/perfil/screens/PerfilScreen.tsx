@@ -46,27 +46,96 @@ export function PerfilScreen() {
           <InfoRow icon="call-outline" label="Teléfono" value={telefono} />
         </Card>
 
-        {vm.rol === ROLES.vendedor || vm.rol === ROLES.admin ? (
+        {vm.rol === ROLES.admin ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Abrir punto de venta"
-            onPress={() => router.push('/ventas')}
+            accessibilityLabel="Abrir panel de administración"
+            onPress={() => router.push('/admin')}
             style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
           >
-            <Ionicons name="cart" size={22} color={colors.accent} />
+            <Ionicons name="speedometer" size={22} color={colors.accent} />
             <View style={styles.posTexts}>
               <AppText variant="bodyMedium" style={styles.posTitle}>
-                Punto de venta
+                Panel de administración
               </AppText>
               <AppText variant="caption" style={styles.posSub}>
-                Buscar productos y clientes para vender
+                Ventas, caja, alertas de inventario y reportes
               </AppText>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
           </Pressable>
         ) : null}
 
+        {vm.rol === ROLES.vendedor || vm.rol === ROLES.admin ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir punto de venta"
+              onPress={() => router.push('/ventas')}
+              style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+            >
+              <Ionicons name="cart" size={22} color={colors.accent} />
+              <View style={styles.posTexts}>
+                <AppText variant="bodyMedium" style={styles.posTitle}>
+                  Punto de venta
+                </AppText>
+                <AppText variant="caption" style={styles.posSub}>
+                  Buscar productos y clientes para vender
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir apartados"
+              onPress={() => router.push('/apartados')}
+              style={({ pressed }) => [styles.posBtn, pressed ? styles.posBtnPressed : null]}
+            >
+              <Ionicons name="bookmark" size={22} color={colors.accent} />
+              <View style={styles.posTexts}>
+                <AppText variant="bodyMedium" style={styles.posTitle}>
+                  Apartados
+                </AppText>
+                <AppText variant="caption" style={styles.posSub}>
+                  Nuevos apartados, abonos y liquidaciones
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />
+            </Pressable>
+          </>
+        ) : null}
+
+        <View style={styles.legal}>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/terminos')}
+          >
+            Términos y condiciones
+          </AppText>
+          <AppText variant="caption"> · </AppText>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/privacidad')}
+          >
+            Aviso de privacidad
+          </AppText>
+        </View>
+
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
+
+        {vm.rol === ROLES.cliente ? (
+          <AppText
+            variant="link"
+            accessibilityRole="button"
+            color={colors.red}
+            style={styles.eliminar}
+            onPress={() => router.push('/eliminar-cuenta')}
+          >
+            Eliminar mi cuenta
+          </AppText>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -116,6 +185,14 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   header: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  eliminar: { textAlign: 'center', marginTop: spacing.sm },
+  legal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
   badge: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,

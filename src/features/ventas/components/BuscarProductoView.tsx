@@ -18,17 +18,33 @@ import { useBuscarProductoViewModel } from '@/features/ventas/viewmodels/useBusc
 interface BuscarProductoViewProps {
   /** Se llama al tocar una variante disponible (stock > 0). */
   onSelect: (variante: VarianteBusqueda) => void;
+  /**
+   * Qué mostrar mientras no hay búsqueda activa (p. ej. el carrito). Si no se
+   * pasa, se muestra la invitación "Busca un producto".
+   */
+  contenidoInicial?: React.ReactNode;
+  /** Limpia la búsqueda al seleccionar (para volver al `contenidoInicial`). */
+  limpiarAlSeleccionar?: boolean;
 }
 
 /**
  * Vista reutilizable de búsqueda de productos para el POS:
  * barra de búsqueda con debounce + lista de resultados agrupados por producto.
  *
- * No se encarga de SafeArea: el padre decide si vive como pantalla completa
- * (ver `BuscarProductoScreen`) o incrustada dentro del flujo de venta (Bloque C).
+ * No se encarga de SafeArea: el padre decide dónde vive. En el POS va
+ * incrustada en el paso "Productos" con el carrito como `contenidoInicial`.
  */
-export function BuscarProductoView({ onSelect }: BuscarProductoViewProps) {
+export function BuscarProductoView({
+  onSelect,
+  contenidoInicial,
+  limpiarAlSeleccionar = false,
+}: BuscarProductoViewProps) {
   const vm = useBuscarProductoViewModel();
+
+  const handleSelect = (variante: VarianteBusqueda) => {
+    onSelect(variante);
+    if (limpiarAlSeleccionar) vm.setQuery('');
+  };
 
   // Construimos las secciones de la SectionList a partir de los grupos.
   const sections: SectionListData<VarianteBusqueda, { nombre: string }>[] = vm.grupos.map(
@@ -51,7 +67,9 @@ export function BuscarProductoView({ onSelect }: BuscarProductoViewProps) {
         leftAccessory={<Ionicons name="search" size={18} color={colors.text.muted} />}
       />
 
-      {vm.idle ? (
+      {vm.idle && contenidoInicial ? (
+        contenidoInicial
+      ) : vm.idle ? (
         <StateView
           kind="empty"
           title="Busca un producto"
@@ -89,7 +107,7 @@ export function BuscarProductoView({ onSelect }: BuscarProductoViewProps) {
               <ProductoResultRow
                 variante={item}
                 compact={section.data.length > 1}
-                onPress={onSelect}
+                onPress={handleSelect}
               />
             </View>
           )}

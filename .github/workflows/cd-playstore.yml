@@ -1,0 +1,125 @@
+name: CD - Generación de Versión Play Store
+
+# Solo compila cuando el código YA llegó a release o main (un PR aprobado y
+# fusionado genera un push). No se compila en cada PR: es lento y gasta
+# créditos de EAS.
+#
+#   release -> APK instalable (perfil "preview"), versión X.Y.Z-rc.N
+#              para pruebas de caja negra y regresión.
+#   main    -> AAB firmado (perfil "production"), versión X.Y.Z
+#              + tag vX.Y.Z + GitHub Release con las notas de cambios.
+#
+# La versión se calcula sola con scripts/siguiente-version.sh a partir de los
+# commits (feat -> menor, fix/otros -> parche, "!" -> mayor). No hay que
+# editar app.json a mano. El versionCode de Android lo incrementa EAS.
+on:
+  push:
+    branches: [release, 'release/**', main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pruebas:
+    name: Pruebas antes de compilar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --ci
+
+  version:
+    name: Calcular versión
+    runs-on: ubuntu-latest
+    outputs:
+      numero: ${{ steps.calc.outputs.numero }}
+      perfil: ${{ steps.calc.outputs.perfil }}
+      tag: ${{ steps.calc.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historial y tags completos para calcular la versión
+      - id: calc
+        run: |
+          BASE="$(bash scripts/siguiente-version.sh)"
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then
+            NUMERO="$BASE"
+            echo "perfil=production" >> "$GITHUB_OUTPUT"
+            echo "tag=v$BASE" >> "$GITHUB_OUTPUT"
+          else
+            NUMERO="${BASE}-rc.${GITHUB_RUN_NUMBER}"
+            echo "perfil=preview" >> "$GITHUB_OUTPUT"
+          fi
+          echo "numero=$NUMERO" >> "$GITHUB_OUTPUT"
+          echo "### Versión: \`$NUMERO\`" >> "$GITHUB_STEP_SUMMARY"
+
+  construir:
+    name: Compilar Android con EAS
+    needs: [pruebas, version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Configurar EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # EAS sube el código según git, por eso la versión se deja en un commit
+      # LOCAL del runner (nunca se sube al repositorio).
+      - name: Aplicar versión ${{ needs.version.outputs.numero }}
+        env:
+          NUMERO: ${{ needs.version.outputs.numero }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
+            app.expo.version = process.env.NUMERO;
+            fs.writeFileSync("app.json", JSON.stringify(app, null, 2) + "\n");'
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
+            commit -q -am "chore: versión $NUMERO (solo para la compilación)"
+
+      - name: Compilar (${{ needs.version.outputs.perfil }})
+        run: >
+          eas build --platform android
+          --profile ${{ needs.version.outputs.perfil }}
+          --non-interactive
+
+  liberar:
+    name: Crear tag y GitHub Release
+    needs: [version, construir]
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag ${{ needs.version.outputs.tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "El tag $TAG ya existe (no hubo commits nuevos); no se crea otro."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --generate-notes

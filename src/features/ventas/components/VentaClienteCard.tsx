@@ -10,6 +10,8 @@ interface VentaClienteCardProps {
   sinCliente: boolean;
   onBuscar: () => void;
   onQuitar: () => void;
+  /** Texto secundario cuando aún no hay cliente. */
+  textoVacio?: string;
 }
 
 /** Tarjeta superior del POS que muestra/elige el cliente de la venta. */
@@ -18,6 +20,7 @@ export function VentaClienteCard({
   sinCliente,
   onBuscar,
   onQuitar,
+  textoVacio = 'O continuar como venta de mostrador',
 }: VentaClienteCardProps) {
   if (cliente) {
     return (
@@ -102,7 +105,7 @@ export function VentaClienteCard({
           Seleccionar cliente
         </AppText>
         <AppText variant="caption" style={styles.caption}>
-          O continuar como venta de mostrador
+          {textoVacio}
         </AppText>
       </View>
       <Ionicons name="chevron-forward" size={20} color={colors.text.muted} />

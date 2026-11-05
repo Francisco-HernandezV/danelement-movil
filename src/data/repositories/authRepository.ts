@@ -63,14 +63,22 @@ export const authRepository = {
     return http.post<MessageResponse>('/users/recover/send-email', { email }, { auth: false });
   },
 
-  recoverValidateToken(token: string): Promise<MessageResponse> {
-    return http.post<MessageResponse>('/users/recover/validate-token', { token }, { auth: false });
+  /**
+   * El correo identifica la cuenta: el backend admite 5 códigos incorrectos
+   * por cuenta y después bloquea la recuperación durante unos minutos.
+   */
+  recoverValidateToken(email: string, token: string): Promise<MessageResponse> {
+    return http.post<MessageResponse>(
+      '/users/recover/validate-token',
+      { email, token },
+      { auth: false },
+    );
   },
 
-  recoverReset(token: string, nuevaPassword: string): Promise<MessageResponse> {
+  recoverReset(email: string, token: string, nuevaPassword: string): Promise<MessageResponse> {
     return http.post<MessageResponse>(
       '/users/recover/reset',
-      { token, nueva_password: nuevaPassword },
+      { email, token, nueva_password: nuevaPassword },
       { auth: false },
     );
   },

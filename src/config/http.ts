@@ -83,11 +83,15 @@ function toApiError(status: number, data: unknown): ApiError {
   return new ApiError(message, status, fieldErrors);
 }
 
+/** Cómo leer el cuerpo de una respuesta exitosa. */
+type ResponseKind = 'json' | 'bytes';
+
 async function request<T>(
   method: Method,
   path: string,
   body?: unknown,
   options?: RequestOptions,
+  kind: ResponseKind = 'json',
 ): Promise<T> {
   const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 
@@ -98,7 +102,9 @@ async function request<T>(
     else options.signal.addEventListener('abort', () => controller.abort());
   }
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = {
+    Accept: kind === 'bytes' ? 'application/pdf, application/octet-stream, */*' : 'application/json',
+  };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
 
   const effectiveToken = options?.token ?? (options?.auth === false ? null : authToken);
@@ -125,16 +131,20 @@ async function request<T>(
   }
   clearTimeout(timeoutId);
 
-  const text = await response.text();
-  const data = text ? safeJson(text) : null;
-
   if (!response.ok) {
     if ((response.status === 401 || response.status === 403) && usedSessionToken) {
       onUnauthorized?.();
     }
-    throw toApiError(response.status, data);
+    // Los errores siempre se leen como texto/JSON, aunque se pidieran bytes.
+    const text = await response.text();
+    throw toApiError(response.status, text ? safeJson(text) : null);
   }
-  return data as T;
+
+  if (kind === 'bytes') {
+    return new Uint8Array(await response.arrayBuffer()) as T;
+  }
+  const text = await response.text();
+  return (text ? safeJson(text) : null) as T;
 }
 
 export const http = {
@@ -142,4 +152,7 @@ export const http = {
   post: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('POST', path, body, options),
   put: <T>(path: string, body?: unknown, options?: RequestOptions) => request<T>('PUT', path, body, options),
   delete: <T>(path: string, options?: RequestOptions) => request<T>('DELETE', path, undefined, options),
+  /** GET de un archivo binario (p. ej. un PDF). Con error HTTP lanza `ApiError` como siempre. */
+  getBytes: (path: string, options?: RequestOptions) =>
+    request<Uint8Array>('GET', path, undefined, options, 'bytes'),
 };
