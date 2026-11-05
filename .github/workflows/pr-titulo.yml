@@ -1,0 +1,35 @@
+name: PR - Título
+
+# Corre también al EDITAR el PR, para que corregir el título vuelva a validar
+# sin tener que subir commits. El título se vuelve el commit al hacer squash, y
+# de ahí sale la versión automática: feat -> menor, fix -> parche, "!" -> mayor.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [develop, release, 'release/**', main]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  titulo_pr:
+    name: Título del PR (Conventional Commits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
