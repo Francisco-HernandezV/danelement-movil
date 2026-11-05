@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Banner, Button, Card, Heading } from '@/components/ui';
+import { LEGAL_URLS } from '@/config/env';
 import type { UserRole } from '@/data/models/user';
 import { ROLES, roleLabel } from '@/data/models/user';
 import { colors, radius, spacing } from '@/theme';
@@ -105,6 +107,24 @@ export function PerfilScreen() {
           </>
         ) : null}
 
+        <View style={styles.legal}>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.terminos)}
+          >
+            Términos y condiciones
+          </AppText>
+          <AppText variant="caption"> · </AppText>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.privacidad)}
+          >
+            Aviso de privacidad
+          </AppText>
+        </View>
+
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
       </ScrollView>
     </View>
@@ -155,6 +175,13 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   header: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  legal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
   badge: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
