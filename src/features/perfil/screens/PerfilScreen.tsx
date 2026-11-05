@@ -105,6 +105,24 @@ export function PerfilScreen() {
           </>
         ) : null}
 
+        <View style={styles.legal}>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/terminos')}
+          >
+            Términos y condiciones
+          </AppText>
+          <AppText variant="caption"> · </AppText>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/privacidad')}
+          >
+            Aviso de privacidad
+          </AppText>
+        </View>
+
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
       </ScrollView>
     </View>
@@ -155,6 +173,13 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   header: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  legal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
   badge: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,

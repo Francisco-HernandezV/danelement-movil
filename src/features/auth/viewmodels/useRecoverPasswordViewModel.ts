@@ -56,14 +56,14 @@ export function useRecoverPasswordViewModel() {
     }
     setLoading(true);
     try {
-      await authRepository.recoverValidateToken(token.trim());
+      await authRepository.recoverValidateToken(email.trim(), token.trim());
       setStep(3);
     } catch (error) {
       handleError(error, 'Código inválido o expirado.');
     } finally {
       setLoading(false);
     }
-  }, [token, handleError]);
+  }, [email, token, handleError]);
 
   const resetPassword = useCallback(async () => {
     setMessage(null);
@@ -78,7 +78,7 @@ export function useRecoverPasswordViewModel() {
     }
     setLoading(true);
     try {
-      await authRepository.recoverReset(token.trim(), nuevaPassword);
+      await authRepository.recoverReset(email.trim(), token.trim(), nuevaPassword);
       setSuccess(true);
       setMessageType('success');
       setMessage('Contraseña actualizada correctamente.');
@@ -87,7 +87,7 @@ export function useRecoverPasswordViewModel() {
     } finally {
       setLoading(false);
     }
-  }, [token, nuevaPassword, confirmarPassword, handleError]);
+  }, [email, token, nuevaPassword, confirmarPassword, handleError]);
 
   const backToEmail = useCallback(() => {
     setStep(1);

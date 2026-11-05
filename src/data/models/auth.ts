@@ -29,6 +29,8 @@ export interface RegisterRequest {
   telefono_contacto?: string;
   /** Obligatorio en el registro web. Formato ISO `YYYY-MM-DD`. */
   fecha_nacimiento: string;
+  /** Aceptación de Términos y Aviso de privacidad; el backend exige `true`. */
+  acepta_terminos: true;
 }
 
 /** Respuesta genérica `{ message }` (registro, recuperación, etc.). */
