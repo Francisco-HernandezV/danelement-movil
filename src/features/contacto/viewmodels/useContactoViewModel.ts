@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Linking } from 'react-native';
 import type { ComponentProps } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
@@ -94,29 +94,43 @@ export function useContactoViewModel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [avisoApertura, setAvisoApertura] = useState<string | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
-  const cargar = useCallback(async () => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoading(true);
+  const fetchConfig = useCallback(
+    (signal?: AbortSignal) => configRepository.getConfiguracion(signal),
+    [],
+  );
+
+  const aplicar = useCallback((data: ConfiguracionTienda) => {
+    setConfig(data);
     setError(null);
-    try {
-      const data = await configRepository.getConfiguracion(controller.signal);
-      setConfig(data);
-    } catch (e) {
-      if (controller.signal.aborted) return;
-      setError(e instanceof ApiError ? e.message : 'No se pudo cargar la información de contacto.');
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
   }, []);
 
+  const fallar = useCallback((e: unknown) => {
+    if ((e as { name?: string })?.name === 'AbortError') return;
+    setError(e instanceof ApiError ? e.message : 'No se pudo cargar la información de contacto.');
+  }, []);
+
+  // Carga inicial: el estado solo cambia dentro de los callbacks de la promesa
+  // (regla react-hooks/set-state-in-effect), igual que en usePerfilViewModel.
   useEffect(() => {
-    void cargar();
-    return () => abortRef.current?.abort();
-  }, [cargar]);
+    const controller = new AbortController();
+    fetchConfig(controller.signal)
+      .then(aplicar)
+      .catch(fallar)
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [fetchConfig, aplicar, fallar]);
+
+  const reintentar = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchConfig()
+      .then(aplicar)
+      .catch(fallar)
+      .finally(() => setLoading(false));
+  }, [fetchConfig, aplicar, fallar]);
 
   const abrir = useCallback(async (url: string) => {
     setAvisoApertura(null);
@@ -136,7 +150,7 @@ export function useContactoViewModel() {
     loading,
     error,
     avisoApertura,
-    reintentar: cargar,
+    reintentar,
     abrir,
   };
 }
