@@ -1,10 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Banner, Button, Card, Input, Screen } from '@/components/ui';
-import { LEGAL_URLS } from '@/config/env';
 import { colors, spacing } from '@/theme';
 import { AuthHeader } from '@/features/auth/components/AuthHeader';
 import { useRegisterViewModel } from '@/features/auth/viewmodels/useRegisterViewModel';
@@ -112,14 +110,14 @@ export function RegisterScreen() {
                 Soy mayor de 18 años, acepto los{' '}
                 <AppText
                   variant="link"
-                  onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.terminos)}
+                  onPress={() => router.push('/legal/terminos')}
                 >
                   Términos y condiciones
                 </AppText>{' '}
                 y he leído el{' '}
                 <AppText
                   variant="link"
-                  onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.privacidad)}
+                  onPress={() => router.push('/legal/privacidad')}
                 >
                   Aviso de privacidad
                 </AppText>

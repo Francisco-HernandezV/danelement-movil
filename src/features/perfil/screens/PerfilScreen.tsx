@@ -1,11 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Banner, Button, Card, Heading } from '@/components/ui';
-import { LEGAL_URLS } from '@/config/env';
 import type { UserRole } from '@/data/models/user';
 import { ROLES, roleLabel } from '@/data/models/user';
 import { colors, radius, spacing } from '@/theme';
@@ -111,7 +109,7 @@ export function PerfilScreen() {
           <AppText
             variant="link"
             accessibilityRole="link"
-            onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.terminos)}
+            onPress={() => router.push('/legal/terminos')}
           >
             Términos y condiciones
           </AppText>
@@ -119,7 +117,7 @@ export function PerfilScreen() {
           <AppText
             variant="link"
             accessibilityRole="link"
-            onPress={() => void WebBrowser.openBrowserAsync(LEGAL_URLS.privacidad)}
+            onPress={() => router.push('/legal/privacidad')}
           >
             Aviso de privacidad
           </AppText>
