@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Banner, Button, Card, Input, Screen } from '@/components/ui';
-import { spacing } from '@/theme';
+import { colors, spacing } from '@/theme';
 import { AuthHeader } from '@/features/auth/components/AuthHeader';
 import { useRegisterViewModel } from '@/features/auth/viewmodels/useRegisterViewModel';
 
@@ -11,7 +12,7 @@ export function RegisterScreen() {
 
   return (
     <Screen scroll center>
-      <AuthHeader title="Crear cuenta" subtitle="Regístrate para comprar y seguir tus pedidos." />
+      <AuthHeader title="Crear cuenta" subtitle="Crea tu cuenta para guardar tus datos de contacto con la tienda." />
 
       <Card style={styles.card}>
         {vm.message ? (
@@ -82,6 +83,46 @@ export function RegisterScreen() {
                 vm.clearFieldError('password');
               }}
             />
+            {/* Aceptación obligatoria de Términos y Aviso de privacidad */}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: vm.aceptaTerminos }}
+              onPress={() => {
+                vm.setAceptaTerminos(!vm.aceptaTerminos);
+                vm.clearFieldError('acepta_terminos');
+              }}
+              style={styles.checkRow}
+              hitSlop={6}
+            >
+              <Ionicons
+                name={vm.aceptaTerminos ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={vm.fieldErrors.acepta_terminos ? colors.red : colors.accent}
+              />
+              <AppText variant="caption" style={styles.checkText}>
+                Acepto los{' '}
+                <AppText
+                  variant="link"
+                  onPress={() => router.push('/legal/terminos')}
+                >
+                  Términos y condiciones
+                </AppText>{' '}
+                y el{' '}
+                <AppText
+                  variant="link"
+                  onPress={() => router.push('/legal/privacidad')}
+                >
+                  Aviso de privacidad
+                </AppText>
+                .
+              </AppText>
+            </Pressable>
+            {vm.fieldErrors.acepta_terminos ? (
+              <AppText variant="caption" color={colors.red}>
+                {vm.fieldErrors.acepta_terminos}
+              </AppText>
+            ) : null}
+
             <Button title="Registrarse" loading={vm.loading} onPress={() => void vm.submit()} />
 
             <View style={styles.links}>
@@ -99,6 +140,13 @@ export function RegisterScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: spacing.xs },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginVertical: spacing.sm,
+  },
+  checkText: { flex: 1, lineHeight: 20 },
   links: {
     flexDirection: 'row',
     justifyContent: 'center',

@@ -31,6 +31,7 @@ export function useRegisterViewModel() {
   const [telefono, setTelefono] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [password, setPassword] = useState('');
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -63,6 +64,10 @@ export function useRegisterViewModel() {
     if (telefono && !/^\d{10}$/.test(telefono)) {
       localErrors.telefono_contacto = 'El teléfono debe tener 10 dígitos.';
     }
+    if (!aceptaTerminos) {
+      localErrors.acepta_terminos =
+        'Debes aceptar los Términos y condiciones y el Aviso de privacidad.';
+    }
     if (Object.keys(localErrors).length > 0) {
       setFieldErrors(localErrors);
       setMessage('Revisa los campos marcados.');
@@ -77,6 +82,7 @@ export function useRegisterViewModel() {
         password,
         telefono_contacto: telefono.trim() || undefined,
         fecha_nacimiento: fechaNacimiento,
+        acepta_terminos: true,
       });
       setSuccess(true);
       setMessage(res.message || 'Registro exitoso. Revisa tu correo para activar tu cuenta.');
@@ -90,7 +96,7 @@ export function useRegisterViewModel() {
     } finally {
       setLoading(false);
     }
-  }, [nombre, email, telefono, fechaNacimiento, password]);
+  }, [nombre, email, telefono, fechaNacimiento, password, aceptaTerminos]);
 
   return {
     nombre,
@@ -103,6 +109,8 @@ export function useRegisterViewModel() {
     setFecha,
     password,
     setPassword,
+    aceptaTerminos,
+    setAceptaTerminos,
     loading,
     message,
     success,

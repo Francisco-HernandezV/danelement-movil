@@ -105,7 +105,37 @@ export function PerfilScreen() {
           </>
         ) : null}
 
+        <View style={styles.legal}>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/terminos')}
+          >
+            Términos y condiciones
+          </AppText>
+          <AppText variant="caption"> · </AppText>
+          <AppText
+            variant="link"
+            accessibilityRole="link"
+            onPress={() => router.push('/legal/privacidad')}
+          >
+            Aviso de privacidad
+          </AppText>
+        </View>
+
         <Button title="Cerrar sesión" variant="danger" onPress={() => void vm.cerrarSesion()} />
+
+        {vm.rol === ROLES.cliente ? (
+          <AppText
+            variant="link"
+            accessibilityRole="button"
+            color={colors.red}
+            style={styles.eliminar}
+            onPress={() => router.push('/eliminar-cuenta')}
+          >
+            Eliminar mi cuenta
+          </AppText>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -155,6 +185,14 @@ const styles = StyleSheet.create({
   back: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
   header: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  eliminar: { textAlign: 'center', marginTop: spacing.sm },
+  legal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
   badge: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,

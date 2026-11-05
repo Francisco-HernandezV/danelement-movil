@@ -50,3 +50,5 @@ example
 
 .vscode/
 .claude/
+# Reportes de pruebas
+coverage/
